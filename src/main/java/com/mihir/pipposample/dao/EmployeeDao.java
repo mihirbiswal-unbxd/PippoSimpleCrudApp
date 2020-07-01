@@ -13,9 +13,7 @@ import com.mongodb.event.ServerHeartbeatSucceededEvent;
 import com.mongodb.event.ServerMonitorListener;
 import org.bson.Document;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 public class EmployeeDao implements ServerMonitorListener {
     private enum HEALTH_STATUS{
@@ -57,7 +55,7 @@ public class EmployeeDao implements ServerMonitorListener {
             MongoDatabase db = mongo.getDatabase(database);
             MongoCollection<Document> collection = db.getCollection(empCollection);
             if(collection.find(new Document("email", email)).iterator().hasNext())
-                throw new Exception("This employee already exists. Use update instead.");
+                throw new Exception("This employee already exists: " + email + ". Use update instead.");
             Document employeeDoc = new Document();
             employee.entrySet().stream().forEach(entry -> employeeDoc.put(entry.getKey(),entry.getValue()));
             collection.insertOne(employeeDoc);
@@ -66,20 +64,38 @@ public class EmployeeDao implements ServerMonitorListener {
         }
     }
 
-    public Map<String,Object> getEmployeeByEmail(String email) throws Exception{
+//    public Map<String,Object> getEmployeeByEmail(String email) throws Exception{
+//        if(status == HEALTH_STATUS.FAILED || mongo == null)
+//            throw new Exception("Unable to connect to MongoDao");
+//
+//        Map<String,Object> employee = new HashMap<>();
+//        try{
+//            MongoDatabase db = mongo.getDatabase(database);
+//            MongoCollection<Document> collection = db.getCollection(empCollection);
+//            Iterator iter = collection.find(new Document("email", email)).iterator();
+//            if(iter.hasNext()) { employee = (Map) iter.next(); }
+//        } catch (MongoException e) {
+//            throw new Exception(e);
+//        }
+//        return employee;
+//    }
+
+    public Set<Map<String,Object>> bulkGetEmployeeByEmail(Set<String> emails) throws Exception{
         if(status == HEALTH_STATUS.FAILED || mongo == null)
             throw new Exception("Unable to connect to MongoDao");
 
-        Map<String,Object> employee = new HashMap<>();
+        Set<Map<String,Object>> employees = new HashSet<>();
         try{
             MongoDatabase db = mongo.getDatabase(database);
             MongoCollection<Document> collection = db.getCollection(empCollection);
-            Iterator iter = collection.find(new Document("email", email)).iterator();
-            if(iter.hasNext()) { employee = (Map) iter.next(); }
+            Iterator iter = collection.find(new Document("email", emails)).iterator();
+            while(iter.hasNext()) {
+                employees.add((Map)iter.next());
+            }
         } catch (MongoException e) {
             throw new Exception(e);
         }
-        return employee;
+        return employees;
     }
 
     public void updateEmployeeByEmail(String email, Map<String,Object> updateData) throws Exception{
@@ -97,14 +113,14 @@ public class EmployeeDao implements ServerMonitorListener {
         }
     }
 
-    public void deleteEmployeeByEmail(String email) throws Exception{
+    public void bulkDeleteEmployeeByEmail(Set<String> emails) throws Exception{
         if(status == HEALTH_STATUS.FAILED || mongo == null)
             throw new Exception("Unable to connect to MongoDao");
 
         try{
             MongoDatabase db = mongo.getDatabase(database);
             MongoCollection<Document> collection = db.getCollection(empCollection);
-            collection.deleteOne(new Document("email", email));
+            collection.deleteMany(new Document("email", emails));
         } catch (MongoException e) {
             throw new Exception(e);
         }
