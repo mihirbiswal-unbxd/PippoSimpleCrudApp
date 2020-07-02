@@ -6,12 +6,14 @@ import com.google.inject.Injector;
 import ro.pippo.controller.Controller;
 import ro.pippo.controller.ControllerApplication;
 import ro.pippo.core.Pippo;
+import ro.pippo.fastjson.FastjsonEngine;
 
 import java.util.Set;
 
 public class PippoSimpleCrudApplication extends ControllerApplication{
     @Inject
     public PippoSimpleCrudApplication(Set<Controller> controllerSet) {
+        registerContentTypeEngine(FastjsonEngine.class);
         controllerSet.forEach(this::addControllers);
     }
 

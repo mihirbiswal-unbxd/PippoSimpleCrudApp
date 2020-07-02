@@ -1,9 +1,9 @@
-package com.mihir.pipposample.services;
+package com.mihir.pipposample.Employee;
 
 import com.google.inject.Inject;
-import com.mihir.pipposample.dao.EmployeeDao;
+import com.mihir.pipposample.Employee.EmployeeDao;
 
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -23,15 +23,25 @@ public class EmployeeService {
             employees.forEach(this::createEmployee);
     }
 
-    public Set<Map<String,Object>> bulkGetEmployeeByEmail(Set<String> emails) {
-        Set<Map<String,Object>> result = new HashSet<>();
+    public Map<String,Object> getEmployeeByEmail(String email) {
+        Map<String,Object> result = new HashMap<>(0);
         try {
-            employeeDao.bulkGetEmployeeByEmail(emails);
+            result = employeeDao.getEmployeeByEmail(email);
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
         return result;
     }
+
+//    public Set<Map<String,Object>> bulkGetEmployeeByEmail(Set<String> emails) {
+//        Set<Map<String,Object>> result = new HashSet<>(0);
+//        try {
+//            result = employeeDao.bulkGetEmployeeByEmail(emails);
+//        } catch (Exception e) {
+//            System.out.println(e.getMessage());
+//        }
+//        return result;
+//    }
 
     public void updateEmployeeByEmail(String email, Map<String,Object> updateData) {
         try {
@@ -41,9 +51,9 @@ public class EmployeeService {
         }
     }
 
-    public void bulkDeleteEmployeeByEmail(Set<String> emails) {
+    public void deleteEmployeeByEmail(String email) {
         try {
-            employeeDao.bulkDeleteEmployeeByEmail(emails);
+            employeeDao.deleteEmployeeByEmail(email);
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }

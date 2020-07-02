@@ -1,4 +1,4 @@
-package com.mihir.pipposample.dao;
+package com.mihir.pipposample.Employee;
 
 import com.google.inject.Inject;
 import com.mongodb.MongoClient;
@@ -22,8 +22,8 @@ public class EmployeeDao implements ServerMonitorListener {
 
     private HEALTH_STATUS status;
     private MongoClient mongo;
-    private String mongoHost = "mongo";
-    private Integer mongoPort = 27010;
+    private String mongoHost = "127.0.0.1";
+    private Integer mongoPort = 27017;
     private String database = "EmployeeDB";
     private String empCollection = "Employee";
 
@@ -64,39 +64,40 @@ public class EmployeeDao implements ServerMonitorListener {
         }
     }
 
-//    public Map<String,Object> getEmployeeByEmail(String email) throws Exception{
+    public Map<String,Object> getEmployeeByEmail(String email) throws Exception{
+        if(status == HEALTH_STATUS.FAILED || mongo == null)
+            throw new Exception("Unable to connect to MongoDao");
+
+        Map<String,Object> employee = new HashMap<>();
+        try{
+            MongoDatabase db = mongo.getDatabase(database);
+            MongoCollection<Document> collection = db.getCollection(empCollection);
+            Iterator iter = collection.find(new Document("email", email)).iterator();
+            if(iter.hasNext()) { employee = (Map) iter.next(); }
+        } catch (MongoException e) {
+            throw new Exception(e);
+        }
+        return employee;
+    }
+
+//    public Set<Map<String,Object>> bulkGetEmployeeByEmail(Set<String> emails) throws Exception{
 //        if(status == HEALTH_STATUS.FAILED || mongo == null)
 //            throw new Exception("Unable to connect to MongoDao");
 //
-//        Map<String,Object> employee = new HashMap<>();
+//        Set<Map<String,Object>> employees = new HashSet<>();
+//        String email = "mihir.biswal@unbxd.com";
 //        try{
 //            MongoDatabase db = mongo.getDatabase(database);
 //            MongoCollection<Document> collection = db.getCollection(empCollection);
 //            Iterator iter = collection.find(new Document("email", email)).iterator();
-//            if(iter.hasNext()) { employee = (Map) iter.next(); }
+//            while(iter.hasNext()) {
+//                employees.add((Map)iter.next());
+//            }
 //        } catch (MongoException e) {
 //            throw new Exception(e);
 //        }
-//        return employee;
+//        return employees;
 //    }
-
-    public Set<Map<String,Object>> bulkGetEmployeeByEmail(Set<String> emails) throws Exception{
-        if(status == HEALTH_STATUS.FAILED || mongo == null)
-            throw new Exception("Unable to connect to MongoDao");
-
-        Set<Map<String,Object>> employees = new HashSet<>();
-        try{
-            MongoDatabase db = mongo.getDatabase(database);
-            MongoCollection<Document> collection = db.getCollection(empCollection);
-            Iterator iter = collection.find(new Document("email", emails)).iterator();
-            while(iter.hasNext()) {
-                employees.add((Map)iter.next());
-            }
-        } catch (MongoException e) {
-            throw new Exception(e);
-        }
-        return employees;
-    }
 
     public void updateEmployeeByEmail(String email, Map<String,Object> updateData) throws Exception{
         if(status == HEALTH_STATUS.FAILED || mongo == null)
@@ -113,14 +114,14 @@ public class EmployeeDao implements ServerMonitorListener {
         }
     }
 
-    public void bulkDeleteEmployeeByEmail(Set<String> emails) throws Exception{
+    public void deleteEmployeeByEmail(String email) throws Exception{
         if(status == HEALTH_STATUS.FAILED || mongo == null)
             throw new Exception("Unable to connect to MongoDao");
 
         try{
             MongoDatabase db = mongo.getDatabase(database);
             MongoCollection<Document> collection = db.getCollection(empCollection);
-            collection.deleteMany(new Document("email", emails));
+            collection.deleteMany(new Document("email", email));
         } catch (MongoException e) {
             throw new Exception(e);
         }
