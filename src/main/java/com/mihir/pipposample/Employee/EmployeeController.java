@@ -41,7 +41,6 @@ public class EmployeeController extends Controller {
         }
     }
 
-    //TODO there is some issue with update. Fix it.
     @PUT("/update")
     public void updateEmployee() {
         System.out.println("executing put.");

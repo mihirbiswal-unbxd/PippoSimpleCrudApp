@@ -108,7 +108,7 @@ public class EmployeeDao implements ServerMonitorListener {
             MongoCollection<Document> collection = db.getCollection(empCollection);
             Document updateDoc = new Document();
             updateData.entrySet().stream().forEach(entry -> updateDoc.put(entry.getKey(),entry.getValue()));
-            collection.updateOne(new Document("email", email), updateDoc);
+            collection.updateOne(new Document("email", email), new Document("$set", updateDoc));
         } catch (MongoException e) {
             throw new Exception(e);
         }
