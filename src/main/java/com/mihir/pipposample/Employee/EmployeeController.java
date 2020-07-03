@@ -1,8 +1,10 @@
 package com.mihir.pipposample.Employee;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
+import org.bson.Document;
 import ro.pippo.controller.*;
 
 import java.util.*;
@@ -19,10 +21,18 @@ public class EmployeeController extends Controller {
     public String getEmployeeByEmail() {
         System.out.println("executing get.");
         String email_id = getRequest().getQueryParameter("email_id").toString();
-        Map<String,Object> result = employeeService.getEmployeeByEmail(email_id);
         String resultStr = "";
         try{
-            resultStr = mapper.writeValueAsString(result);
+            Map<String,Object> result = new HashMap<>();
+            Set<Document> results = new HashSet<>();
+            if(email_id.contains(",")) {
+                String[] emails = email_id.split(",");
+                results = employeeService.bulkGetEmployeeByEmail(new HashSet<String>(Arrays.asList(emails)));
+                resultStr = mapper.writeValueAsString(results);
+            } else {
+                result = employeeService.getEmployeeByEmail(email_id);
+                resultStr = mapper.writeValueAsString(result);
+            }
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
@@ -34,8 +44,14 @@ public class EmployeeController extends Controller {
         System.out.println("executing post.");
         String requestBody = getRequest().getBody();
         try{
-            Map<String,Object> employee = mapper.readValue(requestBody, new TypeReference<HashMap<String,Object>>(){});
-            employeeService.createEmployee(employee);
+            JsonNode body = mapper.readTree(requestBody);
+            if(body.isArray()) {
+                Set<Document> employees = mapper.readValue(requestBody, new TypeReference<HashSet<Document>>(){});
+                employeeService.bulkCreateEmployees(employees);
+            } else {
+                Document employee = mapper.readValue(requestBody, new TypeReference<Document>(){});
+                employeeService.createEmployee(employee);
+            }
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
@@ -47,8 +63,7 @@ public class EmployeeController extends Controller {
         String email_id = getRequest().getQueryParameter("email_id").toString();
         String requestBody = getRequest().getBody();
         try {
-            Map<String, Object> updateData = mapper.readValue(requestBody, new TypeReference<HashMap<String, Object>>() {
-            });
+            Document updateData = mapper.readValue(requestBody, new TypeReference<Document>() {});
             employeeService.updateEmployeeByEmail(email_id, updateData);
         } catch (Exception e) {
             System.out.println(e.getMessage());
@@ -59,6 +74,11 @@ public class EmployeeController extends Controller {
     public void deleteEmployee() {
         System.out.println("executing delete.");
         String email_id = getRequest().getQueryParameter("email_id").toString();
-        employeeService.deleteEmployeeByEmail(email_id);
+        if(email_id.contains(",")) {
+            String[] emails = email_id.split(",");
+            employeeService.bulkDeleteEmployeeByEmail(new HashSet<String>(Arrays.asList(emails)));
+        } else {
+            employeeService.deleteEmployeeByEmail(email_id);
+        }
     }
 }
